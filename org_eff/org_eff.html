@@ -1,337 +1,342 @@
-<!DOCTYPE html>
 <html>
 <head>
-  <script src="//unpkg.com/three"></script>
-  <script src="//unpkg.com/three-spritetext"></script>
-
-  <script src="//unpkg.com/3d-force-graph"></script>
-  <!--<script src="../../dist/3d-force-graph.js"></script>-->
-
-
-    <style>
-  * {
-    box-sizing: border-box;
-  }
-
-
-
-  /* Create two columns/boxes that floats next to each other */
-  nav {
-    float: left;
-    width: 10%;
-    background: #ffffff;
-    padding: 20px;
-  }
-
-
-  article {
-    float: left;
-    padding: 0px;
-    width: 50%;
-    background-color: #ffffff;
-    /*height: 300px; /* only for demonstration, should be removed */
-  }
-
-
-  /* Responsive layout - makes the two columns/boxes stack on top of each other instead of next to each other, on small screens */
-  @media (max-width: 600px) {
-    nav, article {
-      width: 100%;
-      height: auto;
-    }
-  }
-  </style>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="autocomplete-styles.css">
+<script src="//unpkg.com/3d-force-graph"></script>
 </head>
-
 <body>
 
-  <nav>
-  <img src="https://simplygetresults.com/wp-content/uploads/2018/11/logo-simply-get-results-no-strapline-01.svg" alt="Simply logo" height="100" width="100">
-  </nav>
+<!--Make sure the form has the autocomplete function switched off:-->
+<form autocomplete="off">
+  <div class="autocomplete" style="width:300px;">
+    <input id="myInput" type="text" name="myInputText" placeholder="Search for a node here...">
+  </div>
+  <button type="button" onclick="onSearchSubmit()">Search</button>
+</form>
 
-  <article id="3d-graph">
-  <script>
+<p id="selectedNodeP">No node selected</p>
 
-    const simplyColours = [10472261,7191373,4150947,8204431,11353235,14034486,14842669,15383580]
-    const simplyHexColours = simplyColours.map((x)=>{
-          let y=x.toString(16)
-          console.log(y)
-          let z="#"+y
-          return z
-    })
+<div id="3d-graph"></div>
 
-    console.log(simplyHexColours)
-    const gData = {
-                  "nodes": [
-                    {"id": "Organisational efficiency","val": "8","group": "1" },
-                    {"id": "Performance","val": "3","group": "1" },
-                    {"id": "Performance monitoring approach","val": "1","group": "1" },
-                    {"id": "Performance rating vs salary","val": "1","group": "1" },
-                    {"id": "Congruence between role and measures","val": "1","group": "1" },
-                    {"id": "Managerial performance","val": "1","group": "1" },
-                    {"id": "Budget","val": "3","group": "2" },
-                    {"id": "Cost center hierarchy","val": "1","group": "2" },
-                    {"id": "Governance","val": "3","group": "3" },
-                    {"id": "Number of governance forums","val": "1","group": "3" },
-                    {"id": "Number of meetings","val": "1","group": "3" },
-                    {"id": "Time spent in meetings","val": "1","group": "3" },
-                    {"id": "Mandatory content for governance forums","val": "1","group": "3" },
-                    {"id": "Reporting overheads","val": "1","group": "3" },
-                    {"id": "Cost of time wasted","val": "1","group": "3" },
-                    {"id": "X-inefficiency","val": "1","group": "3" },
-                    {"id": "Function and business classification","val": "3","group": "4" },
-                    {"id": "Functional hierarchy","val": "1","group": "4" },
-                    {"id": "Business hierachy","val": "1","group": "4" },
-                    {"id": "Matrix","val": "1","group": "4" },
-                    {"id": "Reporting lines","val": "1","group": "4" },
-                    {"id": "Lines of demand","val": "1","group": "4" },
-                    {"id": "Lines of command","val": "1","group": "4" },
-                    {"id": "Shape of organisation","val": "3","group": "5" },
-                    {"id": "Organisation structure type","val": "1","group": "5" },
-                    {"id": "Organisational change rate","val": "1","group": "5" },
-                    {"id": "FTE by function","val": "1","group": "5" },
-                    {"id": "Percentage of FTE in management positions","val": "1","group": "5" },
-                    {"id": "Manages as a % of headcount","val": "1","group": "5" },
-                    {"id": "Unions","val": "3","group": "6" },
-                    {"id": "Cost of unionisation","val": "1","group": "6" },
-                    {"id": "Layers","val": "3","group": "7" },
-                    {"id": "Total number of people below layer X","val": "1","group": "7" },
-                    {"id": "Distance from CEO","val": "1","group": "7" },
-                    {"id": "Total team salary cost managed per person","val": "1","group": "7" },
-                    {"id": "Distance from customer","val": "1","group": "7" },
-                    {"id": "Span of control","val": "3","group": "8" },
-                    {"id": "Average span of control by region","val": "1","group": "8" },
-                    {"id": "Ratio of senior leaders against unit span of control","val": "1","group": "8" },
-                    {"id": "Individual contributors","val": "1","group": "8" },
-                    {"id": "Number of one to one reporting lines","val": "1","group": "8" },
-                    {"id": "Number of individual contributers as a % of FTE","val": "1","group": "8" },
-                    {"id": "Industry comparison","val": "3","group": "9" },
-                    {"id": "Workforce cost as a % of capex","val": "1","group": "9" },
-                    {"id": "Workforce cost as a % of total cost","val": "1","group": "9" },
-                    {"id": "Workforce cost as a % of opex","val": "1","group": "9" },
-                    {"id": "Optimise cost reduction","val": "1","group": "9" },
-                    {"id": "Justification of manager cost","val": "1","group": "9" },
-                    {"id": "Compression","val": "3","group": "9" },
-                    {"id": "Compression by grade vs average","val": "1","group": "10" },
-                    {"id": "Compression by region","val": "1","group": "10" },
-                    {"id": "Role and grade congestion","val": "1","group": "10" },
-                    {"id": "Size of organisation","val": "3","group": "10" },
-                    {"id": "Economies of scale","val": "1","group": "11" },
-                    {"id": "Diseconomies of scale","val": "1","group": "11" },
-                    {"id": "Work pattern","val": "1","group": "11" },
-                    {"id": "Workforce cost by function","val": "1","group": "11" },
-                    {"id": "Headcount by grade","val": "1","group": "11" },
-                    {"id": "Cost of senior management","val": "1","group": "11" },
-                    {"id": "Average cost per FTE","val": "1","group": "11" },
-                    {"id": "Total workforce cost by region","val": "1","group": "11" },
-                    {"id": "Salary distribution","val": "1","group": "11" },
-                    {"id": "Salary","val": "1","group": "11" },
-                    {"id": "FTE by contract type","val": "1","group": "11" },
-                    {"id": "Salary cost by function","val": "1","group": "11" },
-                    {"id": "Technology","val": "3","group": "12" },
-                    {"id": "Fixed asset location","val": "1","group": "12" },
-                    {"id": "Technological limits on efficiency","val": "1","group": "12" },
-                    {"id": "Career development","val": "3","group": "12" },
-                    {"id": "Promotion","val": "1","group": "13" },
-                    {"id": "Career pathways","val": "1","group": "13" },
-                    {"id": "Experience level","val": "1","group": "13" },
-                    {"id": "Seniority","val": "1","group": "13" },
-                    {"id": "Internal communication","val": "3","group": "14" },
-                    {"id": "Inefficiency of communication","val": "1","group": "14" },
-                    {"id": "Clarity of communication","val": "1","group": "14" },
-                    {"id": "Transparency","val": "1","group": "14" },
-                    {"id": "Secrecy","val": "1","group": "14" },
-                    {"id": "Accountability","val": "3","group": "15" },
-                    {"id": "Clarity on goals and objectives","val": "1","group": "15" },
-                    {"id": "Clear chain of command","val": "1","group": "15" },
-                    {"id": "Role/job clarity","val": "1","group": "15" },
-                    {"id": "Job overlap","val": "1","group": "15" },
-                    {"id": "Delegation of authority","val": "1","group": "15" },
-                    {"id": "Recruitment effectiveness","val": "3","group": "16" },
-                    {"id": "Vacancies","val": "1","group": "16" },
-                    {"id": "Hiring to organisational needs","val": "1","group": "16" },
-                    {"id": "Management hire rate","val": "1","group": "16" },
-                    {"id": "Manager turnover rate","val": "1","group": "16" },
-                    {"id": "Management promotion rate","val": "1","group": "16" },
-                    {"id": "Position hierarchy","val": "3","group": "17" },
-                    {"id": "Capability of people","val": "3","group": "17" },
-                    {"id": "Location","val": "3","group": "17" },
-                    {"id": "Management hierarchy","val": "3","group": "17" },
-                    {"id": "Total cost","val": "3","group": "17" },
-                    {"id": "Process efficiency","val": "3","group": "17" },
-                    {"id": "Network strength","val": "3","group": "17" },
-                    {"id": "Output vs customer expectation","val": "3","group": "17" },
-                    {"id": "Clarity on org structure","val": "3","group": "17" },
-                    {"id": "Workforce mix","val": "3","group": "17" },
-                    {"id": "Job mix","val": "1","group": "17" },
-                    {"id": "Role mix","val": "1","group": "17" },
-                    {"id": "Attrition rate","val": "3","group": "17" }
-                  ],
-                  "links": [
-                    {"source": "Performance","target": "Organisational efficiency" },
-    {"source": "Budget","target": "Organisational efficiency" },
-    {"source": "Governance","target": "Organisational efficiency" },
-    {"source": "Function and business classification","target": "Organisational efficiency" },
-    {"source": "Shape of organisation","target": "Organisational efficiency" },
-    {"source": "Unions","target": "Organisational efficiency" },
-    {"source": "Layers","target": "Organisational efficiency" },
-    {"source": "Span of control","target": "Organisational efficiency" },
-    {"source": "Industry comparison","target": "Organisational efficiency" },
-    {"source": "Compression","target": "Organisational efficiency" },
-    {"source": "Size of organisation","target": "Organisational efficiency" },
-    {"source": "Technology","target": "Organisational efficiency" },
-    {"source": "Career development","target": "Organisational efficiency" },
-    {"source": "Internal communication","target": "Organisational efficiency" },
-    {"source": "Accountability","target": "Organisational efficiency" },
-    {"source": "Recruitment effectiveness","target": "Organisational efficiency" },
-    {"source": "Accountability","target": "Workforce mix" },
-    {"source": "Accountability","target": "Position hierarchy" },
-    {"source": "Governance","target": "Accountability" },
-    {"source": "Accountability","target": "Internal communication" },
-    {"source": "Accountability","target": "Clarity on org structure" },
-    {"source": "Accountability","target": "Network strength" },
-    {"source": "Recruitment effectiveness","target": "Position hierarchy" },
-    {"source": "Attrition rate","target": "Recruitment effectiveness" },
-    {"source": "Clarity on org structure","target": "Internal communication" },
-    {"source": "Network strength","target": "Internal communication" },
-    {"source": "Internal communication","target": "Process efficiency" },
-    {"source": "Process efficiency","target": "Output vs customer expectation" },
-    {"source": "Process efficiency","target": "Technology" },
-    {"source": "Technology","target": "Size of organisation" },
-    {"source": "Process efficiency","target": "Size of organisation" },
-    {"source": "Internal communication","target": "Career development" },
-    {"source": "Size of organisation","target": "Industry comparison" },
-    {"source": "Industry comparison","target": "Total cost" },
-    {"source": "Shape of organisation","target": "Industry comparison" },
-    {"source": "Shape of organisation","target": "Size of organisation" },
-    {"source": "Size of organisation","target": "Function and business classification" },
-    {"source": "Management hierarchy","target": "Size of organisation" },
-    {"source": "Management hierarchy","target": "Compression" },
-    {"source": "Shape of organisation","target": "Management hierarchy" },
-    {"source": "Management hierarchy","target": "Layers" },
-    {"source": "Management hierarchy","target": "Span of control" },
-    {"source": "Industry comparison","target": "Governance" },
-    {"source": "Shape of organisation","target": "Function and business classification" },
-    {"source": "Shape of organisation","target": "Location" },
-    {"source": "Unions","target": "Location" },
-    {"source": "Layers","target": "Location" },
-    {"source": "Function and business classification","target": "Location" },
-    {"source": "Function and business classification","target": "Budget" },
-    {"source": "Location","target": "Span of control" },
-    {"source": "Location","target": "Budget" },
-    {"source": "Career development","target": "Capability of people" },
-    {"source": "Career development","target": "Performance" },
-    {"source": "Career development","target": "Position hierarchy" },
-    {"source": "Performance","target": "Capability of people" },
-    {"source": "Position hierarchy","target": "Budget" },
-    {"source": "Budget","target": "Total cost" },
-    {"source": "Performance monitoring approach","target": "Performance" },
-    {"source": "Performance rating vs salary","target": "Performance" },
-    {"source": "Congruence between role and measures","target": "Performance" },
-    {"source": "Managerial performance","target": "Performance" },
-    {"source": "Cost center hierarchy","target": "Budget" },
-    {"source": "Number of governance forums","target": "Governance" },
-    {"source": "Number of meetings","target": "X-inefficiency" },
-    {"source": "Time spent in meetings","target": "X-inefficiency" },
-    {"source": "Mandatory content for governance forums","target": "X-inefficiency" },
-    {"source": "Reporting overheads","target": "Governance" },
-    {"source": "Cost of time wasted","target": "Governance" },
-    {"source": "X-inefficiency","target": "Governance" },
-    {"source": "Functional hierarchy","target": "Function and business classification" },
-    {"source": "Business hierachy","target": "Function and business classification" },
-    {"source": "Matrix","target": "Business hierachy" },
-    {"source": "Reporting lines","target": "Business hierachy" },
-    {"source": "Lines of demand","target": "Functional hierarchy" },
-    {"source": "Lines of command","target": "Functional hierarchy" },
-    {"source": "Organisation structure type","target": "Shape of organisation" },
-    {"source": "Organisational change rate","target": "Shape of organisation" },
-    {"source": "FTE by function","target": "Shape of organisation" },
-    {"source": "Percentage of FTE in management positions","target": "Shape of organisation" },
-    {"source": "Manages as a % of headcount","target": "Shape of organisation" },
-    {"source": "Cost of unionisation","target": "Unions" },
-    {"source": "Total number of people below layer X","target": "Distance from CEO" },
-    {"source": "Distance from CEO","target": "Layers" },
-    {"source": "Total team salary cost managed per person","target": "Layers" },
-    {"source": "Distance from customer","target": "Layers" },
-    {"source": "Average span of control by region","target": "Span of control" },
-    {"source": "Ratio of senior leaders against unit span of control","target": "Span of control" },
-    {"source": "Individual contributors","target": "Span of control" },
-    {"source": "Number of one to one reporting lines","target": "Span of control" },
-    {"source": "Number of individual contributers as a % of FTE","target": "Individual contributors" },
-    {"source": "Workforce cost as a % of capex","target": "Industry comparison" },
-    {"source": "Workforce cost as a % of total cost","target": "Industry comparison" },
-    {"source": "Workforce cost as a % of opex","target": "Industry comparison" },
-    {"source": "Optimise cost reduction","target": "Industry comparison" },
-    {"source": "Justification of manager cost","target": "Industry comparison" },
-    {"source": "Compression by grade vs average","target": "Compression" },
-    {"source": "Compression by region","target": "Compression" },
-    {"source": "Role and grade congestion","target": "Compression" },
-    {"source": "Economies of scale","target": "Size of organisation" },
-    {"source": "Diseconomies of scale","target": "Size of organisation" },
-    {"source": "Work pattern","target": "Size of organisation" },
-    {"source": "Workforce cost by function","target": "Size of organisation" },
-    {"source": "Headcount by grade","target": "Size of organisation" },
-    {"source": "Cost of senior management","target": "Salary" },
-    {"source": "Average cost per FTE","target": "Size of organisation" },
-    {"source": "Total workforce cost by region","target": "Size of organisation" },
-    {"source": "Salary distribution","target": "Salary" },
-    {"source": "Salary","target": "Size of organisation" },
-    {"source": "FTE by contract type","target": "Size of organisation" },
-    {"source": "Salary cost by function","target": "Salary" },
-    {"source": "Fixed asset location","target": "Technology" },
-    {"source": "Technological limits on efficiency","target": "Technology" },
-    {"source": "Promotion","target": "Career development" },
-    {"source": "Career pathways","target": "Promotion" },
-    {"source": "Experience level","target": "Career development" },
-    {"source": "Seniority","target": "Career development" },
-    {"source": "Inefficiency of communication","target": "Internal communication" },
-    {"source": "Clarity of communication","target": "Internal communication" },
-    {"source": "Transparency","target": "Clarity of communication" },
-    {"source": "Secrecy","target": "Clarity of communication" },
-    {"source": "Clarity on goals and objectives","target": "Role/job clarity" },
-    {"source": "Clear chain of command","target": "Role/job clarity" },
-    {"source": "Role/job clarity","target": "Accountability" },
-    {"source": "Job overlap","target": "Accountability" },
-    {"source": "Delegation of authority","target": "Accountability" },
-    {"source": "Vacancies","target": "Recruitment effectiveness" },
-    {"source": "Hiring to organisational needs","target": "Recruitment effectiveness" },
-    {"source": "Management hire rate","target": "Manager turnover rate" },
-    {"source": "Manager turnover rate","target": "Recruitment effectiveness" },
-    {"source": "Management promotion rate","target": "Manager turnover rate" },
-    {"source": "Job mix","target": "Workforce mix" },
-    {"source": "Role mix","target": "Workforce mix" }
-                  ]
-              };
+<script src='./search-autocomplete.js'></script>
 
-                const Graph = ForceGraph3D()
-                  (document.getElementById('3d-graph'))
-                    .nodeThreeObject(node => {
-                      // use a sphere as a drag handle
-                      const obj = new THREE.Mesh(
-                        new THREE.SphereGeometry(node.val),
-                        new THREE.MeshBasicMaterial({ depthWrite: false, transparent: true, opacity: 0 })
-                      );
-                      // add text sprite as child
-                      const sprite = new SpriteText(node.id);
-                      sprite.color = simplyHexColours[node.group];
-                      sprite.textHeight = 10*node.val;
-                      obj.add(sprite);
-                      return obj;
-                    })
-                    .backgroundColor('#ffffff')
-                    //.linkOpacity(1)
-                    //.linkDirectionalParticles(10)
-                    .linkDirectionalParticleWidth(2)
-                    //.linkWidth(2)
-                    .showNavInfo(false)
-                    .linkOpacity(0.7)
-                    .graphData(gData);
+<script>
+const gData = {
+              "nodes": [
+                {"id": "Organisational efficiency","val": "8","group": "1" },
+                {"id": "Performance","val": "3","group": "1" },
+                {"id": "Performance monitoring approach","val": "1","group": "1" },
+                {"id": "Performance rating vs salary","val": "1","group": "1" },
+                {"id": "Congruence between role and measures","val": "1","group": "1" },
+                {"id": "Managerial performance","val": "1","group": "1" },
+                {"id": "Budget","val": "3","group": "2" },
+                {"id": "Cost center hierarchy","val": "1","group": "2" },
+                {"id": "Governance","val": "3","group": "3" },
+                {"id": "Number of governance forums","val": "1","group": "3" },
+                {"id": "Number of meetings","val": "1","group": "3" },
+                {"id": "Time spent in meetings","val": "1","group": "3" },
+                {"id": "Mandatory content for governance forums","val": "1","group": "3" },
+                {"id": "Reporting overheads","val": "1","group": "3" },
+                {"id": "Cost of time wasted","val": "1","group": "3" },
+                {"id": "X-inefficiency","val": "1","group": "3" },
+                {"id": "Function and business classification","val": "3","group": "4" },
+                {"id": "Functional hierarchy","val": "1","group": "4" },
+                {"id": "Business hierachy","val": "1","group": "4" },
+                {"id": "Matrix","val": "1","group": "4" },
+                {"id": "Reporting lines","val": "1","group": "4" },
+                {"id": "Lines of demand","val": "1","group": "4" },
+                {"id": "Lines of command","val": "1","group": "4" },
+                {"id": "Shape of organisation","val": "3","group": "5" },
+                {"id": "Organisation structure type","val": "1","group": "5" },
+                {"id": "Organisational change rate","val": "1","group": "5" },
+                {"id": "FTE by function","val": "1","group": "5" },
+                {"id": "Percentage of FTE in management positions","val": "1","group": "5" },
+                {"id": "Manages as a % of headcount","val": "1","group": "5" },
+                {"id": "Unions","val": "3","group": "6" },
+                {"id": "Cost of unionisation","val": "1","group": "6" },
+                {"id": "Layers","val": "3","group": "7" },
+                {"id": "Total number of people below layer X","val": "1","group": "7" },
+                {"id": "Distance from CEO","val": "1","group": "7" },
+                {"id": "Total team salary cost managed per person","val": "1","group": "7" },
+                {"id": "Distance from customer","val": "1","group": "7" },
+                {"id": "Span of control","val": "3","group": "8" },
+                {"id": "Average span of control by region","val": "1","group": "8" },
+                {"id": "Ratio of senior leaders against unit span of control","val": "1","group": "8" },
+                {"id": "Individual contributors","val": "1","group": "8" },
+                {"id": "Number of one to one reporting lines","val": "1","group": "8" },
+                {"id": "Number of individual contributers as a % of FTE","val": "1","group": "8" },
+                {"id": "Industry comparison","val": "3","group": "9" },
+                {"id": "Workforce cost as a % of capex","val": "1","group": "9" },
+                {"id": "Workforce cost as a % of total cost","val": "1","group": "9" },
+                {"id": "Workforce cost as a % of opex","val": "1","group": "9" },
+                {"id": "Optimise cost reduction","val": "1","group": "9" },
+                {"id": "Justification of manager cost","val": "1","group": "9" },
+                {"id": "Compression","val": "3","group": "9" },
+                {"id": "Compression by grade vs average","val": "1","group": "10" },
+                {"id": "Compression by region","val": "1","group": "10" },
+                {"id": "Role and grade congestion","val": "1","group": "10" },
+                {"id": "Size of organisation","val": "3","group": "10" },
+                {"id": "Economies of scale","val": "1","group": "11" },
+                {"id": "Diseconomies of scale","val": "1","group": "11" },
+                {"id": "Work pattern","val": "1","group": "11" },
+                {"id": "Workforce cost by function","val": "1","group": "11" },
+                {"id": "Headcount by grade","val": "1","group": "11" },
+                {"id": "Cost of senior management","val": "1","group": "11" },
+                {"id": "Average cost per FTE","val": "1","group": "11" },
+                {"id": "Total workforce cost by region","val": "1","group": "11" },
+                {"id": "Salary distribution","val": "1","group": "11" },
+                {"id": "Salary","val": "1","group": "11" },
+                {"id": "FTE by contract type","val": "1","group": "11" },
+                {"id": "Salary cost by function","val": "1","group": "11" },
+                {"id": "Technology","val": "3","group": "12" },
+                {"id": "Fixed asset location","val": "1","group": "12" },
+                {"id": "Technological limits on efficiency","val": "1","group": "12" },
+                {"id": "Career development","val": "3","group": "12" },
+                {"id": "Promotion","val": "1","group": "13" },
+                {"id": "Career pathways","val": "1","group": "13" },
+                {"id": "Experience level","val": "1","group": "13" },
+                {"id": "Seniority","val": "1","group": "13" },
+                {"id": "Internal communication","val": "3","group": "14" },
+                {"id": "Inefficiency of communication","val": "1","group": "14" },
+                {"id": "Clarity of communication","val": "1","group": "14" },
+                {"id": "Transparency","val": "1","group": "14" },
+                {"id": "Secrecy","val": "1","group": "14" },
+                {"id": "Accountability","val": "3","group": "15" },
+                {"id": "Clarity on goals and objectives","val": "1","group": "15" },
+                {"id": "Clear chain of command","val": "1","group": "15" },
+                {"id": "Role/job clarity","val": "1","group": "15" },
+                {"id": "Job overlap","val": "1","group": "15" },
+                {"id": "Delegation of authority","val": "1","group": "15" },
+                {"id": "Recruitment effectiveness","val": "3","group": "16" },
+                {"id": "Vacancies","val": "1","group": "16" },
+                {"id": "Hiring to organisational needs","val": "1","group": "16" },
+                {"id": "Management hire rate","val": "1","group": "16" },
+                {"id": "Manager turnover rate","val": "1","group": "16" },
+                {"id": "Management promotion rate","val": "1","group": "16" },
+                {"id": "Position hierarchy","val": "3","group": "17" },
+                {"id": "Capability of people","val": "3","group": "17" },
+                {"id": "Location","val": "3","group": "17" },
+                {"id": "Management hierarchy","val": "3","group": "17" },
+                {"id": "Total cost","val": "3","group": "17" },
+                {"id": "Process efficiency","val": "3","group": "17" },
+                {"id": "Network strength","val": "3","group": "17" },
+                {"id": "Output vs customer expectation","val": "3","group": "17" },
+                {"id": "Clarity on org structure","val": "3","group": "17" },
+                {"id": "Workforce mix","val": "3","group": "17" },
+                {"id": "Job mix","val": "1","group": "17" },
+                {"id": "Role mix","val": "1","group": "17" },
+                {"id": "Attrition rate","val": "3","group": "17" }
+              ],
+              "links": [
+                {"source": "Performance","target": "Organisational efficiency" },
+{"source": "Budget","target": "Organisational efficiency" },
+{"source": "Governance","target": "Organisational efficiency" },
+{"source": "Function and business classification","target": "Organisational efficiency" },
+{"source": "Shape of organisation","target": "Organisational efficiency" },
+{"source": "Unions","target": "Organisational efficiency" },
+{"source": "Layers","target": "Organisational efficiency" },
+{"source": "Span of control","target": "Organisational efficiency" },
+{"source": "Industry comparison","target": "Organisational efficiency" },
+{"source": "Compression","target": "Organisational efficiency" },
+{"source": "Size of organisation","target": "Organisational efficiency" },
+{"source": "Technology","target": "Organisational efficiency" },
+{"source": "Career development","target": "Organisational efficiency" },
+{"source": "Internal communication","target": "Organisational efficiency" },
+{"source": "Accountability","target": "Organisational efficiency" },
+{"source": "Recruitment effectiveness","target": "Organisational efficiency" },
+{"source": "Accountability","target": "Workforce mix" },
+{"source": "Accountability","target": "Position hierarchy" },
+{"source": "Governance","target": "Accountability" },
+{"source": "Accountability","target": "Internal communication" },
+{"source": "Accountability","target": "Clarity on org structure" },
+{"source": "Accountability","target": "Network strength" },
+{"source": "Recruitment effectiveness","target": "Position hierarchy" },
+{"source": "Attrition rate","target": "Recruitment effectiveness" },
+{"source": "Clarity on org structure","target": "Internal communication" },
+{"source": "Network strength","target": "Internal communication" },
+{"source": "Internal communication","target": "Process efficiency" },
+{"source": "Process efficiency","target": "Output vs customer expectation" },
+{"source": "Process efficiency","target": "Technology" },
+{"source": "Technology","target": "Size of organisation" },
+{"source": "Process efficiency","target": "Size of organisation" },
+{"source": "Internal communication","target": "Career development" },
+{"source": "Size of organisation","target": "Industry comparison" },
+{"source": "Industry comparison","target": "Total cost" },
+{"source": "Shape of organisation","target": "Industry comparison" },
+{"source": "Shape of organisation","target": "Size of organisation" },
+{"source": "Size of organisation","target": "Function and business classification" },
+{"source": "Management hierarchy","target": "Size of organisation" },
+{"source": "Management hierarchy","target": "Compression" },
+{"source": "Shape of organisation","target": "Management hierarchy" },
+{"source": "Management hierarchy","target": "Layers" },
+{"source": "Management hierarchy","target": "Span of control" },
+{"source": "Industry comparison","target": "Governance" },
+{"source": "Shape of organisation","target": "Function and business classification" },
+{"source": "Shape of organisation","target": "Location" },
+{"source": "Unions","target": "Location" },
+{"source": "Layers","target": "Location" },
+{"source": "Function and business classification","target": "Location" },
+{"source": "Function and business classification","target": "Budget" },
+{"source": "Location","target": "Span of control" },
+{"source": "Location","target": "Budget" },
+{"source": "Career development","target": "Capability of people" },
+{"source": "Career development","target": "Performance" },
+{"source": "Career development","target": "Position hierarchy" },
+{"source": "Performance","target": "Capability of people" },
+{"source": "Position hierarchy","target": "Budget" },
+{"source": "Budget","target": "Total cost" },
+{"source": "Performance monitoring approach","target": "Performance" },
+{"source": "Performance rating vs salary","target": "Performance" },
+{"source": "Congruence between role and measures","target": "Performance" },
+{"source": "Managerial performance","target": "Performance" },
+{"source": "Cost center hierarchy","target": "Budget" },
+{"source": "Number of governance forums","target": "Governance" },
+{"source": "Number of meetings","target": "X-inefficiency" },
+{"source": "Time spent in meetings","target": "X-inefficiency" },
+{"source": "Mandatory content for governance forums","target": "X-inefficiency" },
+{"source": "Reporting overheads","target": "Governance" },
+{"source": "Cost of time wasted","target": "Governance" },
+{"source": "X-inefficiency","target": "Governance" },
+{"source": "Functional hierarchy","target": "Function and business classification" },
+{"source": "Business hierachy","target": "Function and business classification" },
+{"source": "Matrix","target": "Business hierachy" },
+{"source": "Reporting lines","target": "Business hierachy" },
+{"source": "Lines of demand","target": "Functional hierarchy" },
+{"source": "Lines of command","target": "Functional hierarchy" },
+{"source": "Organisation structure type","target": "Shape of organisation" },
+{"source": "Organisational change rate","target": "Shape of organisation" },
+{"source": "FTE by function","target": "Shape of organisation" },
+{"source": "Percentage of FTE in management positions","target": "Shape of organisation" },
+{"source": "Manages as a % of headcount","target": "Shape of organisation" },
+{"source": "Cost of unionisation","target": "Unions" },
+{"source": "Total number of people below layer X","target": "Distance from CEO" },
+{"source": "Distance from CEO","target": "Layers" },
+{"source": "Total team salary cost managed per person","target": "Layers" },
+{"source": "Distance from customer","target": "Layers" },
+{"source": "Average span of control by region","target": "Span of control" },
+{"source": "Ratio of senior leaders against unit span of control","target": "Span of control" },
+{"source": "Individual contributors","target": "Span of control" },
+{"source": "Number of one to one reporting lines","target": "Span of control" },
+{"source": "Number of individual contributers as a % of FTE","target": "Individual contributors" },
+{"source": "Workforce cost as a % of capex","target": "Industry comparison" },
+{"source": "Workforce cost as a % of total cost","target": "Industry comparison" },
+{"source": "Workforce cost as a % of opex","target": "Industry comparison" },
+{"source": "Optimise cost reduction","target": "Industry comparison" },
+{"source": "Justification of manager cost","target": "Industry comparison" },
+{"source": "Compression by grade vs average","target": "Compression" },
+{"source": "Compression by region","target": "Compression" },
+{"source": "Role and grade congestion","target": "Compression" },
+{"source": "Economies of scale","target": "Size of organisation" },
+{"source": "Diseconomies of scale","target": "Size of organisation" },
+{"source": "Work pattern","target": "Size of organisation" },
+{"source": "Workforce cost by function","target": "Size of organisation" },
+{"source": "Headcount by grade","target": "Size of organisation" },
+{"source": "Cost of senior management","target": "Salary" },
+{"source": "Average cost per FTE","target": "Size of organisation" },
+{"source": "Total workforce cost by region","target": "Size of organisation" },
+{"source": "Salary distribution","target": "Salary" },
+{"source": "Salary","target": "Size of organisation" },
+{"source": "FTE by contract type","target": "Size of organisation" },
+{"source": "Salary cost by function","target": "Salary" },
+{"source": "Fixed asset location","target": "Technology" },
+{"source": "Technological limits on efficiency","target": "Technology" },
+{"source": "Promotion","target": "Career development" },
+{"source": "Career pathways","target": "Promotion" },
+{"source": "Experience level","target": "Career development" },
+{"source": "Seniority","target": "Career development" },
+{"source": "Inefficiency of communication","target": "Internal communication" },
+{"source": "Clarity of communication","target": "Internal communication" },
+{"source": "Transparency","target": "Clarity of communication" },
+{"source": "Secrecy","target": "Clarity of communication" },
+{"source": "Clarity on goals and objectives","target": "Role/job clarity" },
+{"source": "Clear chain of command","target": "Role/job clarity" },
+{"source": "Role/job clarity","target": "Accountability" },
+{"source": "Job overlap","target": "Accountability" },
+{"source": "Delegation of authority","target": "Accountability" },
+{"source": "Vacancies","target": "Recruitment effectiveness" },
+{"source": "Hiring to organisational needs","target": "Recruitment effectiveness" },
+{"source": "Management hire rate","target": "Manager turnover rate" },
+{"source": "Manager turnover rate","target": "Recruitment effectiveness" },
+{"source": "Management promotion rate","target": "Manager turnover rate" },
+{"source": "Job mix","target": "Workforce mix" },
+{"source": "Role mix","target": "Workforce mix" }
+              ]
+          };
 
-                Graph.d3Force('charge').strength(-500);
+nodes=[]
+for(const item of gData.nodes){
+  nodes.push(item.id)
+}
 
 
-  </script>
-</article>
+/*initiate the autocomplete function on the "myInput" element, and pass along the nodes array as possible autocomplete values:*/
+autocomplete(document.getElementById("myInput"), nodes);
+
+/*##############################################################################
+
+
+###############################################################################*/
+
+const simplyColours = [10472261,7191373,4150947,8204431,11353235,14034486,14842669,15383580]
+const simplyHexColours = simplyColours.map((x)=>{
+    let y=x.toString(16)
+    let z="#"+y
+    return z
+  })
+
+const hiddenColour=16645886;
+
+//Display the graph
+const Graph = ForceGraph3D()
+  (document.getElementById('3d-graph'))
+    .nodeColor(node => (simplyColours[node.group]))
+    .nodeLabel(node => "<font size=\"6\", color=\"black\">"+ node.id+"</font>")
+    .linkOpacity(0.5)
+    .nodeOpacity(1)
+    .nodeRelSize(8)
+    //.linkDirectionalParticles(10)
+    .linkDirectionalParticleWidth(2)
+    .linkWidth(3)
+    //.linkAutoColorBy(d => gData.nodes[d.source].group)
+    .backgroundColor('#ffffff')
+    .graphData(gData);
+
+/*##############################################################################
+
+
+###############################################################################*/
+
+var selectedNodeId;
+var searchedNodeId;
+
+function onSearchSubmit(){
+  var searchTerm = document.getElementById('myInput').value;
+  //Check the gData object to see if it contains the term being searched for
+  try{
+    searchedNodeId=gData.nodes.find(node => node.id.toLowerCase()===searchTerm.toLowerCase()).id;
+    console.log(searchedNodeId)
+  }
+  catch(err){
+    alert("That's not a valid node, jeez")</html>
+  }
+  //Change the html message to show the node that has been searched for as selected
+  if(searchedNodeId){
+    selectedNodeId=searchedNodeId;
+    document.getElementById('selectedNodeP').innerHTML = `Node Selcted: ${selectedNodeId}`
+  }
+
+  //Colour the node that you have selected
+  Graph.nodeColor(node=> selectedNodeId.includes(node.id) ? simplyColours[node.group] : hiddenColour)
+
+  //Move the camera to view the node you want
+  moveToNode(selectedNodeId);
+}
+
+
+function moveToNode(){
+
+}
+
+</script>
 </body>
 </html>
