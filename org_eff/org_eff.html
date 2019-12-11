@@ -1,24 +1,11 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="autocomplete-styles.css">
 <script src="//unpkg.com/3d-force-graph"></script>
 </head>
 <body>
 
-<!--Make sure the form has the autocomplete function switched off:-->
-<form autocomplete="off">
-  <div class="autocomplete" style="width:300px;">
-    <input id="myInput" type="text" name="myInputText" placeholder="Search for a node here...">
-  </div>
-  <button type="button" onclick="onSearchSubmit()">Search</button>
-</form>
-
-<p id="selectedNodeP">No node selected</p>
-
 <div id="3d-graph"></div>
-
-<script src='./search-autocomplete.js'></script>
 
 <script>
 const gData = {
@@ -263,15 +250,6 @@ const gData = {
               ]
           };
 
-nodes=[]
-for(const item of gData.nodes){
-  nodes.push(item.id)
-}
-
-
-/*initiate the autocomplete function on the "myInput" element, and pass along the nodes array as possible autocomplete values:*/
-autocomplete(document.getElementById("myInput"), nodes);
-
 /*##############################################################################
 
 
@@ -306,36 +284,7 @@ const Graph = ForceGraph3D()
 
 ###############################################################################*/
 
-var selectedNodeId;
-var searchedNodeId;
 
-function onSearchSubmit(){
-  var searchTerm = document.getElementById('myInput').value;
-  //Check the gData object to see if it contains the term being searched for
-  try{
-    searchedNodeId=gData.nodes.find(node => node.id.toLowerCase()===searchTerm.toLowerCase()).id;
-    console.log(searchedNodeId)
-  }
-  catch(err){
-    alert("That's not a valid node, jeez")</html>
-  }
-  //Change the html message to show the node that has been searched for as selected
-  if(searchedNodeId){
-    selectedNodeId=searchedNodeId;
-    document.getElementById('selectedNodeP').innerHTML = `Node Selcted: ${selectedNodeId}`
-  }
-
-  //Colour the node that you have selected
-  Graph.nodeColor(node=> selectedNodeId.includes(node.id) ? simplyColours[node.group] : hiddenColour)
-
-  //Move the camera to view the node you want
-  moveToNode(selectedNodeId);
-}
-
-
-function moveToNode(){
-
-}
 
 </script>
 </body>
