@@ -1,23 +1,143 @@
-<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="autocomplete-styles.css">
+<title>Systemic Model</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="//unpkg.com/3d-force-graph"></script>
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Style the side navigation */
+.sidenav {
+  height: 100vh;
+  width: 15vw;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  background-color: #ffffff;
+  overflow-x: hidden;
+  margin-left: 10px;
+  margin-right: 10px;
+  margin-top: 1vh;
+}
+
+/* Change color on hover */
+.sidenav a:hover {
+  background-color: #ffffff;
+  color: black;
+}
+
+/* Style the content */
+.content {
+  margin-left: 200px;
+  padding-left: 20px;
+  overflow: auto;
+}
+
+/*the container must be positioned relative:*/
+.autocomplete {
+  position: relative;
+  display: inline-block;
+  width: 15vw;
+}
+
+input {
+  border: 1px solid transparent;
+  background-color: #f1f1f1;
+  padding: 10px;
+  font-size: 16px;
+}
+
+input[type=text] {
+  background-color: #f1f1f1;
+  width: 15vw;
+  resize: both;
+}
+
+button[type=button] {
+  background-color: DodgerBlue;
+  color: #ffffff;
+  cursor: pointer;
+  position: relative;
+  font-size: 16px;
+  padding: 10px;
+  width: 100px;
+  margin-top: 10px;
+}
+
+
+.autocomplete-items {
+  position: absolute;
+  border: 1px solid #d4d4d4;
+  border-bottom: none;
+  border-top: none;
+  z-index: 99;
+  /*position the autocomplete items to be the same width as the container:*/
+  top: 100%;
+  left: 0;
+  right: 0;
+  width: 15vw;
+}
+
+.autocomplete-items div {
+  padding: 10px;
+  cursor: pointer;
+  background-color: #fff;
+  border-bottom: 1px solid #d4d4d4;
+}
+
+/*when hovering an item:*/
+.autocomplete-items div:hover {
+  background-color: #e9e9e9;
+}
+
+/*when navigating through the items using the arrow keys:*/
+.autocomplete-active {
+  background-color: DodgerBlue !important;
+  color: #ffffff;
+}
+
+
+</style>
 </head>
-<body>
+<body onresize="windowResize()">
 
-<!--Make sure the form has the autocomplete function switched off:-->
-<form autocomplete="off">
-  <div class="autocomplete" style="width:300px;">
-    <input id="myInput" type="text" name="myInputText" placeholder="Search for a node here...">
-  </div>
-  <button type="button" onclick="onSearchSubmit()">Search</button>
-</form>
+<div class="sidenav">
 
-<p id="selectedNodeP">No node selected</p>
+    <!--Make sure the form has the autocomplete function switched off:-->
+  <form autocomplete="off">
+    <div class="autocomplete" style="width:300px;">
+      <input id="myInput" type="text" name="myInputText" placeholder="Search for a node here...">
+    </div>
+  </form>
+    <div>
+      <button type="button" class="findButton" onclick="onSearchSubmit()">Search</button>
+    </div>
 
-<div id="3d-graph"></div>
+    <div>
+    <p id="selectedNodeP">No node selected</p>
+    </div>
+
+    <div>
+      <button type="button" class="showInfluencers" onclick="colourInfluencers()">Show influencers</button>
+      <button type="button" class="showInfluenced"  onclick="colourInfluenced()">Show influenced</button>
+    </div>
+
+    <div>
+      <button type="button" class="showInfluencers" onclick="Graph.nodeColor(node => (simplyColours[node.group]))">Reset</button>
+    </div>
+
+</div>
+
+<div id="3d-graph" class="content"></div>
 
 <script src='./search-autocomplete.js'></script>
 
@@ -121,6 +241,9 @@ const Graph = ForceGraph3D()
     .linkWidth(3)
     //.linkAutoColorBy(d => gData.nodes[d.source].group)
     .backgroundColor('#ffffff')
+    .width(window.innerWidth*0.85)
+    .height(window.innerHeight)
+    .showNavInfo(false)
     .graphData(gData);
 
 /*##############################################################################
@@ -139,7 +262,7 @@ function onSearchSubmit(){
     console.log(searchedNodeId)
   }
   catch(err){
-    alert("That's not a valid node, jeez")
+    alert("No valid search input")
   }
   //Change the html message to show the node that has been searched for as selected
   if(searchedNodeId){
@@ -148,16 +271,74 @@ function onSearchSubmit(){
   }
 
   //Colour the node that you have selected
-  Graph.nodeColor(node=> selectedNodeId.includes(node.id) ? simplyColours[node.group] : hiddenColour)
+  Graph.nodeColor(node=> selectedNodeId.indexOf(node.id) ? hiddenColour : simplyColours[node.group])
 
   //Move the camera to view the node you want
   moveToNode(selectedNodeId);
 }
 
+function colourInfluencers(){
+  showInfluencers=true;
+  showInfluenced=false;
+  colourNeighbours();
+}
+
+function colourInfluenced(){
+  showInfluencers=false;
+  showInfluenced=true;
+  colourNeighbours();
+}
+
+function colourNeighbours(){
+    //for now, colour the whole graph grey
+    //Graph.nodeColor(node=> node.id==selectedNodeId ? simplyColours[node.group] : hiddenColour);
+    console.log('Entering function')
+    let neighboursIds=[selectedNodeId];
+    let influencedIds=[];
+    let influencersIds=[];
+
+    //find influencers
+    if(showInfluenced){
+      //console.log("showInfluenced loop")
+      for(i=0,numberOfLinks=gData.links.length;i<numberOfLinks;i++){
+        if(gData.links[i].source.id==selectedNodeId){
+          //console.log(gData.links[i].target);
+          influencedIds.push(gData.links[i].target.id)
+        }
+      }
+    }
+    console.log(influencedIds)
+
+    //find influencers
+    if(showInfluencers){
+      //console.log("showInfluencers loop")
+      for(i=0,numberOfLinks=gData.links.length;i<numberOfLinks;i++){
+        //console.log(gData.links[i])
+        if(gData.links[i].target.id==selectedNodeId){
+          //console.log("Find influencers loop")
+          //console.log(gData.links[i]);
+          //console.log(gData.links[i].source);
+          influencersIds.push(gData.links[i].source.id)
+        }
+      }
+    }
+    console.log(influencersIds)
+
+    neighboursIds=neighboursIds.concat(influencersIds).concat(influencedIds);
+
+    //colour in neighbours, hide everything else
+    Graph.nodeColor(node=> neighboursIds.includes(node.id) ? simplyColours[node.group] : hiddenColour)
+    //could make this a more complicated if statement to change the colour depending on whether they are influencers or influenced
+  }
 
 function moveToNode(){
 
 }
 
+function windowResize(){
+  Graph.width(window.innerWidth*0.9).height(window.innerHeight)
+}
+
 </script>
 </body>
+</html>
