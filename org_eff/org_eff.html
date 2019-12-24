@@ -409,7 +409,7 @@ const hiddenColour=16645886;
 //Display the graph
 const Graph = ForceGraph3D()
   (document.getElementById('3d-graph'))
-    .nodeColor(node => (simplyColours[node.group]))
+    .nodeColor(node => (simplyColours[node.group%8]))
     .nodeLabel(node => "<font size=\"6\", color=\"black\">"+ node.id+"</font>")
     .linkOpacity(0.5)
     .nodeOpacity(1)
