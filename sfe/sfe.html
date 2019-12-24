@@ -1,157 +1,237 @@
-<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <script src="//unpkg.com/three"></script>
-  <script src="//unpkg.com/three-spritetext"></script>
+<title>Systemic Model</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="//unpkg.com/3d-force-graph"></script>
+<style>
+* {
+  box-sizing: border-box;
+}
 
-  <script src="//unpkg.com/3d-force-graph"></script>
-  <!--<script src="../../dist/3d-force-graph.js"></script>-->
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Style the side navigation */
+.sidenav {
+  height: 100vh;
+  width: 15vw;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  background-color: #ffffff;
+  overflow-x: hidden;
+  margin-left: 10px;
+  margin-right: 10px;
+  margin-top: 1vh;
+}
+
+/* Change color on hover */
+.sidenav a:hover {
+  background-color: #ffffff;
+  color: black;
+}
+
+/* Style the content */
+.content {
+  margin-left: 200px;
+  padding-left: 20px;
+  overflow: auto;
+}
+
+/*the container must be positioned relative:*/
+.autocomplete {
+  position: relative;
+  display: inline-block;
+  width: 15vw;
+}
+
+input {
+  border: 1px solid transparent;
+  background-color: #f1f1f1;
+  padding: 10px;
+  font-size: 16px;
+}
+
+input[type=text] {
+  background-color: #f1f1f1;
+  width: 15vw;
+  resize: both;
+}
+
+button[type=button] {
+  background-color: DodgerBlue;
+  color: #ffffff;
+  cursor: pointer;
+  position: relative;
+  font-size: 16px;
+  padding: 10px;
+  width: 100px;
+  margin-top: 10px;
+}
 
 
-    <style>
-  * {
-    box-sizing: border-box;
-  }
+.autocomplete-items {
+  position: absolute;
+  border: 1px solid #d4d4d4;
+  border-bottom: none;
+  border-top: none;
+  z-index: 99;
+  /*position the autocomplete items to be the same width as the container:*/
+  top: 100%;
+  left: 0;
+  right: 0;
+  width: 15vw;
+}
+
+.autocomplete-items div {
+  padding: 10px;
+  cursor: pointer;
+  background-color: #fff;
+  border-bottom: 1px solid #d4d4d4;
+}
+
+/*when hovering an item:*/
+.autocomplete-items div:hover {
+  background-color: #e9e9e9;
+}
+
+/*when navigating through the items using the arrow keys:*/
+.autocomplete-active {
+  background-color: DodgerBlue !important;
+  color: #ffffff;
+}
 
 
-
-  /* Create two columns/boxes that floats next to each other */
-  nav {
-    float: left;
-    width: 10%;
-    background: #ffffff;
-    padding: 20px;
-  }
-
-
-  article {
-    float: left;
-    padding: 0px;
-    width: 50%;
-    background-color: #ffffff;
-    /*height: 300px; /* only for demonstration, should be removed */
-  }
-
-
-  /* Responsive layout - makes the two columns/boxes stack on top of each other instead of next to each other, on small screens */
-  @media (max-width: 600px) {
-    nav, article {
-      width: 100%;
-      height: auto;
-    }
-  }
-  </style>
-
+</style>
 </head>
+<body onresize="windowResize()">
 
-<body>
+<div class="sidenav">
 
-  <nav>
-  <img src="https://simplygetresults.com/wp-content/uploads/2018/11/logo-simply-get-results-no-strapline-01.svg" alt="Simply logo" height="100" width="100">
-  </nav>
+    <!--Make sure the form has the autocomplete function switched off:-->
+  <form autocomplete="off">
+    <div class="autocomplete" style="width:300px;">
+      <input id="myInput" type="text" name="myInputText" placeholder="Search for a node here...">
+    </div>
+  </form>
+    <div>
+      <button type="button" class="findButton" onclick="onSearchSubmit()">Search</button>
+    </div>
 
-  <article id="3d-graph">
-  <script>
+    <div>
+    <p id="selectedNodeP">No node selected</p>
+    </div>
 
-    const simplyColours = [10472261,7191373,4150947,8204431,11353235,14034486,14842669,15383580]
-    const simplyHexColours = simplyColours.map((x)=>{
-          let y=x.toString(16)
-          console.log(y)
-          let z="#"+y
-          return z
-    })
+    <div>
+      <button type="button" class="showInfluencers" onclick="colourInfluencers()">Show influencers</button>
+      <button type="button" class="showInfluenced"  onclick="colourInfluenced()">Show influenced</button>
+    </div>
 
-    console.log(simplyHexColours)
-    const gData = {
-      nodes: [
-        {"id": "Salesforce effectiveness","val": "8","group": "1" },
-  {"id": "Economic factors","val": "3","group": "0" },
-  {"id": "Commercial","val": "1","group": "0" },
-  {"id": "Competition","val": "1","group": "0" },
-  {"id": "Unemployment rate","val": "1","group": "0" },
-  {"id": "Employment laws","val": "1","group": "0" },
-  {"id": "Regulation","val": "1","group": "0" },
-  {"id": "Brand reputation","val": "1","group": "0" },
-  {"id": "Competitors reward structure","val": "1","group": "0" },
-  {"id": "Size of competitors","val": "1","group": "0" },
-  {"id": "Competitor pricing","val": "1","group": "0" },
-  {"id": "Competitor activity","val": "1","group": "0" },
-  {"id": "Infrastructure Support","val": "1","group": "0" },
-  {"id": "Local job market","val": "1","group": "0" },
-  {"id": "Mergers & Acquisitions","val": "1","group": "0" },
-  {"id": "Conversion rates","val": "1","group": "0" },
-  {"id": "Recruitment","val": "3","group": "3" },
-  {"id": "Interview process","val": "1","group": "3" },
-  {"id": "Onboarding","val": "1","group": "3" },
-  {"id": "Recruitment practice","val": "1","group": "3" },
-  {"id": "Outsourced Recruitment","val": "1","group": "3" },
-  {"id": "Time to onboard","val": "1","group": "3" },
-  {"id": "Reward","val": "3","group": "1" },
-  {"id": "Pay","val": "1","group": "1" },
-  {"id": "Incentive structure","val": "1","group": "1" },
-  {"id": "Performance","val": "3","group": "1" },
-  {"id": "Supervisor performance","val": "1","group": "1" },
-  {"id": "Targets","val": "1","group": "1" },
-  {"id": "Hours worked","val": "1","group": "1" },
-  {"id": "Time to productivity","val": "1","group": "1" },
-  {"id": "Sales","val": "3","group": "2" },
-  {"id": "Quality of product","val": "1","group": "2" },
-  {"id": "Sales challenges","val": "1","group": "2" },
-  {"id": "Quality of sales","val": "1","group": "2" },
-  {"id": "Number of sales people","val": "1","group": "2" },
-  {"id": "Ease of sales","val": "1","group": "2" },
-  {"id": "Sales process","val": "1","group": "2" },
-  {"id": "Sales targets","val": "1","group": "2" },
-  {"id": "Targeted sales","val": "1","group": "2" },
-  {"id": "Salesforce motivation","val": "1","group": "2" },
-  {"id": "Follow ups","val": "1","group": "2" },
-  {"id": "Product price","val": "1","group": "2" },
-  {"id": "Discount","val": "1","group": "2" },
-  {"id": "Sales addons","val": "1","group": "2" },
-  {"id": "Ability to do a deal","val": "1","group": "2" },
-  {"id": "Channel","val": "1","group": "2" },
-  {"id": "Customer Service","val": "1","group": "2" },
-  {"id": "Marketing","val": "1","group": "2" },
-  {"id": "Payment method","val": "1","group": "2" },
-  {"id": "Culture","val": "3","group": "5" },
-  {"id": "Fairness Of Targets","val": "1","group": "5" },
-  {"id": "Cultural alignment","val": "1","group": "5" },
-  {"id": "Cost","val": "3","group": "1" },
-  {"id": "Marketing spend","val": "1","group": "1" },
-  {"id": "Engagement","val": "3","group": "4" },
-  {"id": "Company influence","val": "1","group": "4" },
-  {"id": "Customer alignment","val": "1","group": "4" },
-  {"id": "Established product","val": "1","group": "4" },
-  {"id": "Recognition","val": "1","group": "4" },
-  {"id": "Supervisor engagement","val": "1","group": "4" },
-  {"id": "Attendance","val": "1","group": "4" },
-  {"id": "Training","val": "3","group": "3" },
-  {"id": "Knowledge and experience","val": "1","group": "3" },
-  {"id": "Training received","val": "1","group": "3" },
-  {"id": "Skill level","val": "1","group": "3" },
-  {"id": "Customer knowledge","val": "1","group": "3" },
-  {"id": "Personal skill","val": "1","group": "3" },
-  {"id": "Language proficiency","val": "1","group": "3" },
-  {"id": "Sales skills","val": "1","group": "3" },
-  {"id": "Access to mentor","val": "1","group": "3" },
-  {"id": "Personal factors","val": "3","group": "5" },
-  {"id": "Employee satisfaction","val": "1","group": "5" },
-  {"id": "Demographics","val": "1","group": "5" },
-  {"id": "Age","val": "1","group": "5" },
-  {"id": "Gender","val": "1","group": "5" },
-  {"id": "Nationality","val": "1","group": "5" },
-  {"id": "Desire to stay","val": "1","group": "5" },
-  {"id": "Shift schedule","val": "1","group": "5" },
-  {"id": "Disposable income","val": "1","group": "5" },
-  {"id": "Location","val": "3","group": "6" },
-  {"id": "Local market","val": "1","group": "6" },
-  {"id": "Travel time between customers","val": "1","group": "6" },
-  {"id": "Region","val": "1","group": "6" },
-  {"id": "Size of sales territory","val": "1","group": "6" },
-  {"id": "Density of sales territory","val": "1","group": "6" }
-    ],
-      links:[
-        {"source": "Economic factors","target": "Salesforce effectiveness" },
+    <div>
+      <button type="button" class="showInfluencers" onclick="Graph.nodeColor(node => (simplyColours[node.group]))">Reset</button>
+    </div>
+
+</div>
+
+<div id="3d-graph" class="content"></div>
+
+<script src='./search-autocomplete.js'></script>
+
+<script>
+const gData = {
+  nodes: [
+    {"id": "Salesforce effectiveness","val": "8","group": "1" },
+{"id": "Economic factors","val": "3","group": "0" },
+{"id": "Commercial","val": "1","group": "0" },
+{"id": "Competition","val": "1","group": "0" },
+{"id": "Unemployment rate","val": "1","group": "0" },
+{"id": "Employment laws","val": "1","group": "0" },
+{"id": "Regulation","val": "1","group": "0" },
+{"id": "Brand reputation","val": "1","group": "0" },
+{"id": "Competitors reward structure","val": "1","group": "0" },
+{"id": "Size of competitors","val": "1","group": "0" },
+{"id": "Competitor pricing","val": "1","group": "0" },
+{"id": "Competitor activity","val": "1","group": "0" },
+{"id": "Infrastructure Support","val": "1","group": "0" },
+{"id": "Local job market","val": "1","group": "0" },
+{"id": "Mergers & Acquisitions","val": "1","group": "0" },
+{"id": "Conversion rates","val": "1","group": "0" },
+{"id": "Recruitment","val": "3","group": "3" },
+{"id": "Interview process","val": "1","group": "3" },
+{"id": "Onboarding","val": "1","group": "3" },
+{"id": "Recruitment practice","val": "1","group": "3" },
+{"id": "Outsourced Recruitment","val": "1","group": "3" },
+{"id": "Time to onboard","val": "1","group": "3" },
+{"id": "Reward","val": "3","group": "1" },
+{"id": "Pay","val": "1","group": "1" },
+{"id": "Incentive structure","val": "1","group": "1" },
+{"id": "Performance","val": "3","group": "1" },
+{"id": "Supervisor performance","val": "1","group": "1" },
+{"id": "Targets","val": "1","group": "1" },
+{"id": "Hours worked","val": "1","group": "1" },
+{"id": "Time to productivity","val": "1","group": "1" },
+{"id": "Sales","val": "3","group": "2" },
+{"id": "Quality of product","val": "1","group": "2" },
+{"id": "Sales challenges","val": "1","group": "2" },
+{"id": "Quality of sales","val": "1","group": "2" },
+{"id": "Number of sales people","val": "1","group": "2" },
+{"id": "Ease of sales","val": "1","group": "2" },
+{"id": "Sales process","val": "1","group": "2" },
+{"id": "Sales targets","val": "1","group": "2" },
+{"id": "Targeted sales","val": "1","group": "2" },
+{"id": "Salesforce motivation","val": "1","group": "2" },
+{"id": "Follow ups","val": "1","group": "2" },
+{"id": "Product price","val": "1","group": "2" },
+{"id": "Discount","val": "1","group": "2" },
+{"id": "Sales addons","val": "1","group": "2" },
+{"id": "Ability to do a deal","val": "1","group": "2" },
+{"id": "Channel","val": "1","group": "2" },
+{"id": "Customer Service","val": "1","group": "2" },
+{"id": "Marketing","val": "1","group": "2" },
+{"id": "Payment method","val": "1","group": "2" },
+{"id": "Culture","val": "3","group": "5" },
+{"id": "Fairness Of Targets","val": "1","group": "5" },
+{"id": "Cultural alignment","val": "1","group": "5" },
+{"id": "Cost","val": "3","group": "1" },
+{"id": "Marketing spend","val": "1","group": "1" },
+{"id": "Engagement","val": "3","group": "4" },
+{"id": "Company influence","val": "1","group": "4" },
+{"id": "Customer alignment","val": "1","group": "4" },
+{"id": "Established product","val": "1","group": "4" },
+{"id": "Recognition","val": "1","group": "4" },
+{"id": "Supervisor engagement","val": "1","group": "4" },
+{"id": "Attendance","val": "1","group": "4" },
+{"id": "Training","val": "3","group": "3" },
+{"id": "Knowledge and experience","val": "1","group": "3" },
+{"id": "Training received","val": "1","group": "3" },
+{"id": "Skill level","val": "1","group": "3" },
+{"id": "Customer knowledge","val": "1","group": "3" },
+{"id": "Personal skill","val": "1","group": "3" },
+{"id": "Language proficiency","val": "1","group": "3" },
+{"id": "Sales skills","val": "1","group": "3" },
+{"id": "Access to mentor","val": "1","group": "3" },
+{"id": "Personal factors","val": "3","group": "5" },
+{"id": "Employee satisfaction","val": "1","group": "5" },
+{"id": "Demographics","val": "1","group": "5" },
+{"id": "Age","val": "1","group": "5" },
+{"id": "Gender","val": "1","group": "5" },
+{"id": "Nationality","val": "1","group": "5" },
+{"id": "Desire to stay","val": "1","group": "5" },
+{"id": "Shift schedule","val": "1","group": "5" },
+{"id": "Disposable income","val": "1","group": "5" },
+{"id": "Location","val": "3","group": "6" },
+{"id": "Local market","val": "1","group": "6" },
+{"id": "Travel time between customers","val": "1","group": "6" },
+{"id": "Region","val": "1","group": "6" },
+{"id": "Size of sales territory","val": "1","group": "6" },
+{"id": "Density of sales territory","val": "1","group": "6" }
+],
+  links:[
+    {"source": "Economic factors","target": "Salesforce effectiveness" },
 {"source": "Recruitment","target": "Salesforce effectiveness" },
 {"source": "Reward","target": "Salesforce effectiveness" },
 {"source": "Performance","target": "Salesforce effectiveness" },
@@ -260,37 +340,143 @@
 {"source": "Size of sales territory","target": "Sales challenges" },
 {"source": "Density of sales territory","target": "Sales challenges" },
 {"source": "Supervisor performance","target": "Supervisor engagement" }
-    ]
-  };
+]
+};
 
-                const Graph = ForceGraph3D()
-                  (document.getElementById('3d-graph'))
-                    .nodeThreeObject(node => {
-                      // use a sphere as a drag handle
-                      const obj = new THREE.Mesh(
-                        new THREE.SphereGeometry(node.val),
-                        new THREE.MeshBasicMaterial({ depthWrite: false, transparent: true, opacity: 0 })
-                      );
-                      // add text sprite as child
-                      const sprite = new SpriteText(node.id);
-                      sprite.color = simplyHexColours[node.group];
-                      sprite.textHeight = 10*node.val;
-                      obj.add(sprite);
-                      return obj;
-                    })
-                    .backgroundColor('#ffffff')
-                    //.linkOpacity(1)
-                    //.linkDirectionalParticles(10)
-                    .linkDirectionalParticleWidth(2)
-                    //.linkWidth(2)
-                    .showNavInfo(false)
-                    .linkOpacity(0.7)
-                    .graphData(gData);
-
-                Graph.d3Force('charge').strength(-500);
+nodes=[]
+for(const item of gData.nodes){
+  nodes.push(item.id)
+}
 
 
-  </script>
-</article>
+/*initiate the autocomplete function on the "myInput" element, and pass along the nodes array as possible autocomplete values:*/
+autocomplete(document.getElementById("myInput"), nodes);
+
+/*##############################################################################
+
+
+###############################################################################*/
+
+const simplyColours = [10472261,7191373,4150947,8204431,11353235,14034486,14842669,15383580]
+const simplyHexColours = simplyColours.map((x)=>{
+    let y=x.toString(16)
+    let z="#"+y
+    return z
+  })
+
+const hiddenColour=16645886;
+
+//Display the graph
+const Graph = ForceGraph3D()
+  (document.getElementById('3d-graph'))
+    .nodeColor(node => (simplyColours[node.group]))
+    .nodeLabel(node => "<font size=\"6\", color=\"black\">"+ node.id+"</font>")
+    .linkOpacity(0.5)
+    .nodeOpacity(1)
+    .nodeRelSize(8)
+    //.linkDirectionalParticles(10)
+    .linkDirectionalParticleWidth(2)
+    .linkWidth(3)
+    //.linkAutoColorBy(d => gData.nodes[d.source].group)
+    .backgroundColor('#ffffff')
+    .width(window.innerWidth*0.85)
+    .height(window.innerHeight)
+    .showNavInfo(false)
+    .graphData(gData);
+
+/*##############################################################################
+
+
+###############################################################################*/
+
+var selectedNodeId;
+var searchedNodeId;
+
+function onSearchSubmit(){
+  var searchTerm = document.getElementById('myInput').value;
+  //Check the gData object to see if it contains the term being searched for
+  try{
+    searchedNodeId=gData.nodes.find(node => node.id.toLowerCase()===searchTerm.toLowerCase()).id;
+    console.log(searchedNodeId)
+  }
+  catch(err){
+    alert("No valid search input")
+  }
+  //Change the html message to show the node that has been searched for as selected
+  if(searchedNodeId){
+    selectedNodeId=searchedNodeId;
+    document.getElementById('selectedNodeP').innerHTML = `Node Selcted: ${selectedNodeId}`
+  }
+
+  //Colour the node that you have selected
+  Graph.nodeColor(node=> selectedNodeId.indexOf(node.id) ? hiddenColour : simplyColours[node.group])
+
+  //Move the camera to view the node you want
+  moveToNode(selectedNodeId);
+}
+
+function colourInfluencers(){
+  showInfluencers=true;
+  showInfluenced=false;
+  colourNeighbours();
+}
+
+function colourInfluenced(){
+  showInfluencers=false;
+  showInfluenced=true;
+  colourNeighbours();
+}
+
+function colourNeighbours(){
+    //for now, colour the whole graph grey
+    //Graph.nodeColor(node=> node.id==selectedNodeId ? simplyColours[node.group] : hiddenColour);
+    console.log('Entering function')
+    let neighboursIds=[selectedNodeId];
+    let influencedIds=[];
+    let influencersIds=[];
+
+    //find influencers
+    if(showInfluenced){
+      //console.log("showInfluenced loop")
+      for(i=0,numberOfLinks=gData.links.length;i<numberOfLinks;i++){
+        if(gData.links[i].source.id==selectedNodeId){
+          //console.log(gData.links[i].target);
+          influencedIds.push(gData.links[i].target.id)
+        }
+      }
+    }
+    console.log(influencedIds)
+
+    //find influencers
+    if(showInfluencers){
+      //console.log("showInfluencers loop")
+      for(i=0,numberOfLinks=gData.links.length;i<numberOfLinks;i++){
+        //console.log(gData.links[i])
+        if(gData.links[i].target.id==selectedNodeId){
+          //console.log("Find influencers loop")
+          //console.log(gData.links[i]);
+          //console.log(gData.links[i].source);
+          influencersIds.push(gData.links[i].source.id)
+        }
+      }
+    }
+    console.log(influencersIds)
+
+    neighboursIds=neighboursIds.concat(influencersIds).concat(influencedIds);
+
+    //colour in neighbours, hide everything else
+    Graph.nodeColor(node=> neighboursIds.includes(node.id) ? simplyColours[node.group] : hiddenColour)
+    //could make this a more complicated if statement to change the colour depending on whether they are influencers or influenced
+  }
+
+function moveToNode(){
+
+}
+
+function windowResize(){
+  Graph.width(window.innerWidth*0.9).height(window.innerHeight)
+}
+
+</script>
 </body>
 </html>
