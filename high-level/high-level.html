@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style> body { margin: 0; } </style>
+
+  <script src="//unpkg.com/3d-force-graph"></script>
+  <script src="//unpkg.com/three"></script>
+  <script src="//unpkg.com/three-spritetext"></script>
+  <!--<script src="../../dist/3d-force-graph.js"></script>-->
+
+
+    <style>
+  * {
+    box-sizing: border-box;
+  }
+
+
+
+  /* Create two columns/boxes that floats next to each other */
+  nav {
+    float: left;
+    width: 15%;
+    background: #ffffff;
+    padding: 20px;
+  }
+
+
+  article {
+    float: left;
+    padding: 0px;
+    width: 50%;
+    height: 80%;
+    background-color: #ffffff;
+    /*height: 300px; /* only for demonstration, should be removed */
+  }
+
+  }
+  </style>
+
+</head>
+
+<body>
+  <nav>
+  <img src="https://simplygetresults.com/wp-content/uploads/2018/11/logo-simply-get-results-no-strapline-01.svg" alt="Simply logo" height="100" width="100">
+
+  <div style="position: absolute; top: 150px;">
+    <button id="toTextToggle" style="margin: 0px;">
+      Show Nodes as Text
+    </button>
+  </div>
+  </nav>
+
+  <article id="3d-graph">
+  <script>
+    const simplyColours = [10472261,7191373,4150947,8204431,11353235,14034486,14842669,15383580]
+    const simplyHexColours = simplyColours.map((x)=>{
+      let y=x.toString(16)
+      console.log(y)
+      let z="#"+y
+      return z
+})
+
+    let gData = {
+                    "nodes": [
+                      {"id": "Profit","val": "3","group": "0" ,"size":100},
+                      {"id": "Revenue","val": "1","group": "1" },
+                      {"id": "Cost","val": "1","group": "1" },
+                      {"id": "Customer Satisfaction","val": "1","group": "2" },
+                      {"id": "Sales","val": "1","group": "2" },
+                      {"id": "Share Price","val": "1","group": "2" },
+                      {"id": "Dividend","val": "1","group": "2" },
+                      {"id": "Market Cap","val": "1","group": "2" },
+                      {"id": "CAPEX","val": "1","group": "2" },
+                      {"id": "OPEX","val": "1","group": "2" },
+                      {"id": "Other OPEX","val": "1","group": "2" },
+                      {"id": "Asset Value","val": "1","group": "3" },
+                      {"id": "Depreciation","val": "1","group": "3" },
+                      {"id": "People Cost","val": "1","group": "3" },
+                      {"id": "Compensation","val": "1","group": "4" },
+                      {"id": "Attrition","val": "1","group": "4" },
+                      {"id": "Recruitment","val": "1","group": "4" },
+                      {"id": "Workforce Mix","val": "1","group": "4" },
+                      {"id": "Organisational Efficiency","val": "1","group": "4" },
+                      {"id": "Performance","val": "1","group": "4" },
+                      {"id": "Capability","val": "1","group": "5" },
+                      {"id": "Training/Learning","val": "1","group": "5" },
+                      {"id": "Culture","val": "1","group": "5" },
+                      {"id": "Engagement","val": "1","group": "5" },
+                      {"id": "HiPo","val": "1","group": "5" }
+                    ],
+                    "links": [
+                      {"source": "Revenue","target": "Profit" },
+                      {"source": "Cost","target": "Profit" },
+                      {"source": "Sales","target": "Revenue" },
+                      {"source": "Customer Satisfaction","target": "Profit" },
+                      {"source": "Profit","target": "Share Price" },
+                      {"source": "Profit","target": "Dividend" },
+                      {"source": "Share Price","target": "Market Cap" },
+                      {"source": "CAPEX","target": "Cost" },
+                      {"source": "OPEX","target": "Cost" },
+                      {"source": "CAPEX","target": "Asset Value" },
+                      {"source": "Depreciation","target": "Profit" },
+                      {"source": "Depreciation","target": "Asset Value" },
+                      {"source": "People Cost","target": "OPEX" },
+                      {"source": "Other OPEX","target": "OPEX" },
+                      {"source": "Compensation","target": "People Cost" },
+                      {"source": "Recruitment","target": "People Cost" },
+                      {"source": "Recruitment","target": "Organisational Efficiency" },
+                      {"source": "Recruitment","target": "Capability" },
+                      {"source": "Capability","target": "Performance" },
+                      {"source": "Performance","target": "Sales" },
+                      {"source": "Recruitment","target": "Workforce Mix" },
+                      {"source": "Attrition","target": "Recruitment" },
+                      {"source": "Compensation","target": "Performance" },
+                      {"source": "Performance","target": "Compensation" },
+                      {"source": "Workforce Mix","target": "Organisational Efficiency" },
+                      {"source": "Engagement","target": "Performance" },
+                      {"source": "Culture","target": "Engagement" },
+                      {"source": "Training/Learning","target": "Capability" },
+                      {"source": "Recruitment","target": "HiPo" },
+                      {"source": "HiPo","target": "Performance" },
+                      {"source": "Organisational Efficiency","target": "People Cost" }
+                    ]
+                };
+
+
+    let nodesAsText=true;
+
+    const Graph = ForceGraph3D()
+      (document.getElementById('3d-graph'))
+        .nodeColor(node => (simplyColours[node.group]))
+        .nodeLabel(node => "<font size=\"6\", color=\"black\">"+ node.id+"</font>")
+        //.linkOpacity(0.5)
+        .nodeOpacity(1)
+        .nodeRelSize(8)
+        //.linkDirectionalParticles(10)
+        .linkDirectionalParticleWidth(2)
+        //.linkWidth(3)
+        //.linkAutoColorBy(d => gData.nodes[d.source].group)
+        .backgroundColor('#ffffff')
+        .graphData(gData)
+        .onNodeClick(node => {
+          // Aim at node from outside it
+          const distance = 40;
+          const distRatio = 1 + distance/Math.hypot(node.x, node.y, node.z);
+          Graph.cameraPosition(
+            { x: node.x * distRatio, y: node.y * distRatio, z: node.z * distRatio }, // new position
+            node, // lookAt ({ x, y, z })
+            3000  // ms transition duration
+          );
+        });
+
+
+        document.getElementById('toTextToggle').addEventListener('click', event => {
+          nodesAsText = !nodesAsText;
+          event.target.innerHTML = `${(nodesAsText ? 'Hide' : 'Show')} Text`;
+            console.log(nodesAsText)
+            if(nodesAsText){
+              Graph.nodeThreeObject(node => {
+                // use a sphere as a drag handle
+                const obj = new THREE.Mesh(
+                  new THREE.SphereGeometry(node.val),
+                  new THREE.MeshBasicMaterial({ depthWrite: false, transparent: true, opacity: 0 })
+                );
+                // add text sprite as child
+                const sprite = new SpriteText(node.id);
+                sprite.color = simplyHexColours[node.group];
+                sprite.textHeight = 10*node.val;
+                obj.add(sprite);
+                return obj;
+              })
+              .nodeLabel(false)
+              .numDimensions(3)
+            }
+          else{
+            Graph.nodeThreeObject(node => {
+              // use a sphere as a drag handle
+              const obj = new THREE.Mesh(
+                new THREE.SphereGeometry(node.val),
+              );
+            })
+            .nodeLabel(node => "<font size=\"6\", color=\"black\">"+ node.id+"</font>");
+          }
+        });
+
+  </script>
+</article>
+</body>
+</html>
