@@ -1,0 +1,587 @@
+<html lang="en">
+<head>
+<title>Systemic Model</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="//unpkg.com/3d-force-graph"></script>
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Style the side navigation */
+.sidenav {
+  height: 100vh;
+  width: 15vw;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  background-color: #ffffff;
+  overflow-x: hidden;
+  margin-left: 10px;
+  margin-right: 10px;
+  margin-top: 1vh;
+}
+
+/* Change color on hover */
+.sidenav a:hover {
+  background-color: #ffffff;
+  color: black;
+}
+
+/* Style the content */
+.content {
+  margin-left: 200px;
+  padding-left: 20px;
+  overflow: auto;
+}
+
+/*the container must be positioned relative:*/
+.autocomplete {
+  position: relative;
+  display: inline-block;
+  width: 15vw;
+}
+
+input {
+  border: 1px solid transparent;
+  background-color: #f1f1f1;
+  padding: 10px;
+  font-size: 16px;
+}
+
+input[type=text] {
+  background-color: #f1f1f1;
+  width: 15vw;
+  resize: both;
+}
+
+button[type=button] {
+  background-color: DodgerBlue;
+  color: #ffffff;
+  cursor: pointer;
+  position: relative;
+  font-size: 16px;
+  padding: 10px;
+  width: 100px;
+  margin-top: 10px;
+}
+
+
+.autocomplete-items {
+  position: absolute;
+  border: 1px solid #d4d4d4;
+  border-bottom: none;
+  border-top: none;
+  z-index: 99;
+  /*position the autocomplete items to be the same width as the container:*/
+  top: 100%;
+  left: 0;
+  right: 0;
+  width: 15vw;
+}
+
+.autocomplete-items div {
+  padding: 10px;
+  cursor: pointer;
+  background-color: #fff;
+  border-bottom: 1px solid #d4d4d4;
+}
+
+/*when hovering an item:*/
+.autocomplete-items div:hover {
+  background-color: #e9e9e9;
+}
+
+/*when navigating through the items using the arrow keys:*/
+.autocomplete-active {
+  background-color: DodgerBlue !important;
+  color: #ffffff;
+}
+
+
+</style>
+</head>
+<body onresize="windowResize()">
+
+<div class="sidenav">
+
+    <!--Make sure the form has the autocomplete function switched off:-->
+  <form autocomplete="off">
+    <div class="autocomplete" style="width:300px;">
+      <input id="myInput" type="text" name="myInputText" placeholder="Search for a node here...">
+    </div>
+  </form>
+    <div>
+      <button type="button" class="findButton" onclick="onSearchSubmit()">Search</button>
+    </div>
+
+    <div>
+    <p id="selectedNodeP">No node selected</p>
+    </div>
+
+    <div>
+      <button type="button" class="showInfluencers" onclick="colourInfluencers()">Show influencers</button>
+      <button type="button" class="showInfluenced"  onclick="colourInfluenced()">Show influenced</button>
+    </div>
+
+    <div>
+      <button type="button" class="showInfluencers" onclick="Graph.nodeColor(node => (simplyColours[node.group]))">Reset</button>
+    </div>
+
+</div>
+
+<div id="3d-graph" class="content"></div>
+
+<script src='./search-autocomplete.js'></script>
+
+<script>
+const gData = {
+  nodes: [
+{"id": "Attrition rate","val": "8","group": "0" },
+{"id": "Voluntary/Involuntary","val": "3","group": "0" },
+{"id": "Performance","val": "3","group": "1" },
+{"id": "Performance rating","val": "1","group": "1" },
+{"id": "Performance measurement","val": "1","group": "1" },
+{"id": "Team performance","val": "1","group": "1" },
+{"id": "Manager performance","val": "1","group": "1" },
+{"id": "Targets/Goals","val": "1","group": "1" },
+{"id": "Achievability of targets","val": "1","group": "1" },
+{"id": "Performance reviews","val": "1","group": "1" },
+{"id": "Reviewer-employee relationship","val": "1","group": "1" },
+{"id": "Location","val": "3","group": "2" },
+{"id": "Home Location","val": "1","group": "2" },
+{"id": "Office Location","val": "1","group": "2" },
+{"id": "City","val": "1","group": "2" },
+{"id": "Region","val": "1","group": "2" },
+{"id": "Country","val": "1","group": "2" },
+{"id": "Commute length","val": "1","group": "2" },
+{"id": "Training received","val": "1","group": "2" },
+{"id": "Distance from home town","val": "1","group": "2" },
+{"id": "Role & Fit","val": "3","group": "3" },
+{"id": "Cultural fit","val": "1","group": "3" },
+{"id": "Role fit","val": "1","group": "3" },
+{"id": "Role design","val": "1","group": "3" },
+{"id": "Autonomy","val": "1","group": "3" },
+{"id": "Responsibility","val": "1","group": "3" },
+{"id": "Work variety","val": "1","group": "3" },
+{"id": "Intellectual stimulation","val": "1","group": "3" },
+{"id": "Nature of work","val": "3","group": "3" },
+{"id": "Flexible working","val": "1","group": "3" },
+{"id": "Shift patterns","val": "1","group": "3" },
+{"id": "Internal processes & systems","val": "1","group": "3" },
+{"id": "Automation of work","val": "1","group": "3" },
+{"id": "Workload","val": "1","group": "3" },
+{"id": "Ability to get things done","val": "1","group": "3" },
+{"id": "Career development","val": "3","group": "5" },
+{"id": "Promotion","val": "1","group": "5" },
+{"id": "Personal development","val": "1","group": "5" },
+{"id": "Training","val": "1","group": "5" },
+{"id": "Skills","val": "1","group": "5" },
+{"id": "Transferable skills","val": "1","group": "5" },
+{"id": "Career prospects","val": "1","group": "5" },
+{"id": "Promotion ceiling","val": "1","group": "5" },
+{"id": "Culture","val": "5","group": "6" },
+{"id": "Company brand","val": "1","group": "6" },
+{"id": "Values & purpose","val": "1","group": "6" },
+{"id": "Opportunities to do good","val": "1","group": "6" },
+{"id": "Alignment of culture: personal to org","val": "1","group": "6" },
+{"id": "Attitudes towards women","val": "1","group": "6" },
+{"id": "The Company","val": "3","group": "6" },
+{"id": "Perception of future success of company","val": "1","group": "6" },
+{"id": "Company reputation","val": "1","group": "6" },
+{"id": "Redundancy","val": "1","group": "6" },
+{"id": "Restructuring","val": "1","group": "6" },
+{"id": "Transformation activity","val": "1","group": "6" },
+{"id": "Relationships","val": "5","group": "3" },
+{"id": "Manager relationship","val": "1","group": "3" },
+{"id": "Manager effectiveness","val": "1","group": "3" },
+{"id": "Disconnect between mgmt & staff","val": "1","group": "3" },
+{"id": "Team dynamics","val": "3","group": "3" },
+{"id": "Team mix","val": "1","group": "3" },
+{"id": "Team size","val": "1","group": "3" },
+{"id": "Friends","val": "1","group": "3" },
+{"id": "Team satisfaction","val": "1","group": "3" },
+{"id": "Colleague relationships","val": "1","group": "3" },
+{"id": "Cooperation","val": "1","group": "3" },
+{"id": "Internal competition","val": "1","group": "3" },
+{"id": "Reward","val": "5","group": "7" },
+{"id": "Benefits","val": "1","group": "7" },
+{"id": "Pay","val": "1","group": "7" },
+{"id": "Performance based reward","val": "1","group": "7" },
+{"id": "Bonuses","val": "1","group": "7" },
+{"id": "Reward structure","val": "1","group": "7" },
+{"id": "Recruitment","val": "3","group": "4" },
+{"id": "Rec. processes","val": "1","group": "4" },
+{"id": "Rec. quality","val": "1","group": "4" },
+{"id": "Nature of rec.","val": "1","group": "4" },
+{"id": "Induction","val": "1","group": "4" },
+{"id": "Economic factors","val": "3","group": "7" },
+{"id": "Personal market value ","val": "1","group": "7" },
+{"id": "Unemployment rate","val": "1","group": "7" },
+{"id": "Competitor hiring activity","val": "1","group": "7" },
+{"id": "Headhunting","val": "1","group": "7" },
+{"id": "Proximity to other job opportunities","val": "1","group": "7" },
+{"id": "Competitor reward structure","val": "1","group": "7" },
+{"id": "Personal factors","val": "5","group": "8" },
+{"id": "Personal psychology","val": "3","group": "8" },
+{"id": "Awareness of personal market value","val": "1","group": "8" },
+{"id": "Job security","val": "1","group": "8" },
+{"id": "Desire to escape from 9-5","val": "1","group": "8" },
+{"id": "Perception of automation threat","val": "1","group": "8" },
+{"id": "Ambition","val": "1","group": "8" },
+{"id": "Work-life balance","val": "3","group": "8" },
+{"id": "Work life","val": "1","group": "8" },
+{"id": "Work related stress","val": "1","group": "8" },
+{"id": "Status/Prestige","val": "1","group": "8" },
+{"id": "Home life","val": "1","group": "8" },
+{"id": "Lifestyle","val": "1","group": "8" },
+{"id": "Family situation","val": "1","group": "8" },
+{"id": "Flexibility of work to life changes","val": "1","group": "8" },
+{"id": "Engagement","val": "3","group": "8" },
+{"id": "Job Satisfaction","val": "1","group": "8" },
+{"id": "Motivation","val": "1","group": "8" }
+],
+  links:[
+    {"source": "Attrition rate","target": "Voluntary/Involuntary" },
+{"source": "Engagement","target": "Attrition rate" },
+{"source": "Job Satisfaction","target": "Engagement" },
+{"source": "Reward","target": "Job Satisfaction" },
+{"source": "Benefits","target": "Reward" },
+{"source": "Pay","target": "Reward" },
+{"source": "Performance based reward","target": "Reward" },
+{"source": "Bonuses","target": "Reward" },
+{"source": "Reward structure","target": "Reward" },
+{"source": "Performance based reward","target": "Bonuses" },
+{"source": "Reward structure","target": "Pay" },
+{"source": "Reward structure","target": "Bonuses" },
+{"source": "Performance rating","target": "Performance based reward" },
+{"source": "Performance measurement","target": "Performance rating" },
+{"source": "Performance","target": "Performance rating" },
+{"source": "Team performance","target": "Performance" },
+{"source": "Manager performance","target": "Performance measurement" },
+{"source": "Manager performance","target": "Performance" },
+{"source": "Manager performance","target": "Team performance" },
+{"source": "Manager performance","target": "Performance rating" },
+{"source": "Reviewer-employee relationship","target": "Performance reviews" },
+{"source": "Performance reviews","target": "Performance rating" },
+{"source": "Performance rating","target": "Promotion" },
+{"source": "Targets/Goals","target": "Performance" },
+{"source": "Achievability of targets","target": "Motivation" },
+{"source": "Motivation","target": "Performance" },
+{"source": "Targets/Goals","target": "Motivation" },
+{"source": "Achievability of targets","target": "Job Satisfaction" },
+{"source": "Engagement","target": "Performance" },
+{"source": "Work-life balance","target": "Engagement" },
+{"source": "Ambition","target": "Performance" },
+{"source": "Status/Prestige","target": "Job Satisfaction" },
+{"source": "Lifestyle","target": "Work life" },
+{"source": "Work related stress","target": "Work life" },
+{"source": "Flexibility of work to life changes","target": "Work-life balance" },
+{"source": "Ambition","target": "Status/Prestige" },
+{"source": "Family situation","target": "Home life" },
+{"source": "Lifestyle","target": "Work life" },
+{"source": "Lifestyle","target": "Home life" },
+{"source": "Work life","target": "Work-life balance" },
+{"source": "Home life","target": "Work-life balance" },
+{"source": "Work life","target": "Lifestyle" },
+{"source": "Home life","target": "Lifestyle" },
+{"source": "Workload","target": "Work related stress" },
+{"source": "Achievability of targets","target": "Work related stress" },
+{"source": "Desire to escape from 9-5","target": "Work related stress" },
+{"source": "Desire to escape from 9-5","target": "Job Satisfaction" },
+{"source": "Relationships","target": "Job Satisfaction" },
+{"source": "Manager relationship","target": "Relationships" },
+{"source": "Manager effectiveness","target": "Manager relationship" },
+{"source": "Manager effectiveness","target": "Manager performance" },
+{"source": "Manager performance","target": "Manager effectiveness" },
+{"source": "Disconnect between mgmt & staff","target": "Manager relationship" },
+{"source": "Colleague relationships","target": "Job Satisfaction" },
+{"source": "Cooperation","target": "Engagement" },
+{"source": "Engagement","target": "Cooperation" },
+{"source": "Internal competition","target": "Job Satisfaction" },
+{"source": "Ambition","target": "Internal competition" },
+{"source": "Disconnect between mgmt & staff","target": "Manager effectiveness" },
+{"source": "Manager effectiveness","target": "Team dynamics" },
+{"source": "Team mix","target": "Team dynamics" },
+{"source": "Team size","target": "Team dynamics" },
+{"source": "Friends","target": "Colleague relationships" },
+{"source": "Friends","target": "Job Satisfaction" },
+{"source": "Friends","target": "Team satisfaction" },
+{"source": "Manager effectiveness","target": "Team satisfaction" },
+{"source": "Manager performance","target": "Team satisfaction" },
+{"source": "Manager performance","target": "Manager effectiveness" },
+{"source": "Team dynamics","target": "Team satisfaction" },
+{"source": "Team satisfaction","target": "Job Satisfaction" },
+{"source": "Cooperation","target": "Team dynamics" },
+{"source": "Internal competition","target": "Team dynamics" },
+{"source": "Manager relationship","target": "Performance rating" },
+{"source": "Team dynamics","target": "Team performance" },
+{"source": "Performance rating","target": "Promotion" },
+{"source": "Manager relationship","target": "Promotion" },
+{"source": "Ambition","target": "Promotion" },
+{"source": "Training","target": "Personal development" },
+{"source": "Promotion ceiling","target": "Promotion" },
+{"source": "Promotion ceiling","target": "Career prospects" },
+{"source": "Promotion","target": "Career prospects" },
+{"source": "Promotion","target": "Job Satisfaction" },
+{"source": "Personal development","target": "Promotion" },
+{"source": "Training","target": "Promotion" },
+{"source": "Skills","target": "Promotion" },
+{"source": "Transferable skills","target": "Promotion" },
+{"source": "Promotion","target": "Job Satisfaction" },
+{"source": "Promotion","target": "Transferable skills" },
+{"source": "Intellectual stimulation","target": "Job Satisfaction" },
+{"source": "Work variety","target": "Intellectual stimulation" },
+{"source": "Responsibility","target": "Intellectual stimulation" },
+{"source": "Autonomy","target": "Intellectual stimulation" },
+{"source": "Role & Fit","target": "Job Satisfaction" },
+{"source": "Role design","target": "Role fit" },
+{"source": "Role design","target": "Autonomy" },
+{"source": "Cultural fit","target": "Role & Fit" },
+{"source": "Intellectual stimulation","target": "Role & Fit" },
+{"source": "Role fit","target": "Role & Fit" },
+{"source": "Nature of work","target": "Role & Fit" },
+{"source": "Flexible working","target": "Nature of work" },
+{"source": "Location","target": "Flexible working" },
+{"source": "Home Location","target": "Location" },
+{"source": "Office Location","target": "Location" },
+{"source": "City","target": "Location" },
+{"source": "Region","target": "City" },
+{"source": "Region","target": "Location" },
+{"source": "City","target": "Commute length" },
+{"source": "Commute length","target": "Flexible working" },
+{"source": "Distance from home town","target": "Commute length" },
+{"source": "Commute length","target": "Office Location" },
+{"source": "Commute length","target": "Distance from home town" },
+{"source": "Flexible working","target": "Training received" },
+{"source": "Location","target": "Job Satisfaction" },
+{"source": "Location","target": "Performance" },
+{"source": "Location","target": "Internal processes & systems" },
+{"source": "Location","target": "Training" },
+{"source": "Location","target": "Flexible working" },
+{"source": "Country","target": "Location" },
+{"source": "Shift patterns","target": "Flexible working" },
+{"source": "Internal processes & systems","target": "Nature of work" },
+{"source": "Automation of work","target": "Nature of work" },
+{"source": "Workload","target": "Flexible working" },
+{"source": "Flexible working","target": "Ability to get things done" },
+{"source": "Ability to get things done","target": "Flexible working" },
+{"source": "Relationships","target": "Nature of work" },
+{"source": "Relationships","target": "Team dynamics" },
+{"source": "Team dynamics","target": "Culture" },
+{"source": "Culture","target": "Job Satisfaction" },
+{"source": "Company brand","target": "Culture" },
+{"source": "Values & purpose","target": "Culture" },
+{"source": "Opportunities to do good","target": "Values & purpose" },
+{"source": "Nature of work","target": "Opportunities to do good" },
+{"source": "Attitudes towards women","target": "Culture" },
+{"source": "Alignment of culture: personal to org","target": "Values & purpose" },
+{"source": "The Company","target": "Culture" },
+{"source": "Perception of future success of company","target": "The Company" },
+{"source": "Company reputation","target": "The Company" },
+{"source": "Alignment of culture: personal to org","target": "The Company" },
+{"source": "Redundancy","target": "The Company" },
+{"source": "Restructuring","target": "The Company" },
+{"source": "Transformation activity","target": "The Company" },
+{"source": "Recruitment","target": "Culture" },
+{"source": "Rec. processes","target": "Recruitment" },
+{"source": "Rec. quality","target": "Recruitment" },
+{"source": "Nature of rec.","target": "Rec. processes" },
+{"source": "Nature of rec.","target": "Rec. quality" },
+{"source": "Induction","target": "Rec. processes" },
+{"source": "Induction","target": "Rec. quality" },
+{"source": "Nature of rec.","target": "Recruitment" },
+{"source": "Economic factors","target": "Reward" },
+{"source": "Personal market value ","target": "Economic factors" },
+{"source": "Unemployment rate","target": "Personal market value " },
+{"source": "Competitor hiring activity","target": "Personal market value " },
+{"source": "Headhunting","target": "Competitor hiring activity" },
+{"source": "Proximity to other job opportunities","target": "Personal market value " },
+{"source": "Competitor reward structure","target": "Personal market value " },
+{"source": "Headhunting","target": "Personal market value " },
+{"source": "Unemployment rate","target": "Economic factors" },
+{"source": "Personal market value ","target": "Awareness of personal market value" },
+{"source": "Proximity to other job opportunities","target": "Economic factors" },
+{"source": "Personal factors","target": "Job Satisfaction" },
+{"source": "Personal psychology","target": "Personal factors" },
+{"source": "Desire to escape from 9-5","target": "Personal psychology" },
+{"source": "Job security","target": "Personal psychology" },
+{"source": "Perception of automation threat","target": "Personal psychology" },
+{"source": "Ambition","target": "Personal psychology" },
+{"source": "Work related stress","target": "Personal psychology" },
+{"source": "Status/Prestige","target": "Personal psychology" },
+{"source": "Home life","target": "Personal psychology" },
+{"source": "Lifestyle","target": "Personal psychology" },
+{"source": "Family situation","target": "Home life" },
+{"source": "Flexibility of work to life changes","target": "Work related stress" },
+{"source": "Lifestyle","target": "Work-life balance" },
+{"source": "Work-life balance","target": "Work related stress" },
+{"source": "Motivation","target": "Personal psychology" },
+{"source": "Engagement","target": "Promotion" },
+{"source": "Promotion","target": "Reward" },
+{"source": "Role & Fit","target": "Performance" },
+{"source": "Reward","target": "Performance" },
+{"source": "Performance","target": "Reward" },
+{"source": "Training received","target": "Transferable skills" },
+{"source": "Training received","target": "Performance based reward" },
+{"source": "Performance","target": "Headhunting" },
+{"source": "Performance","target": "Job security" },
+{"source": "Job security","target": "Work related stress" },
+{"source": "Awareness of personal market value","target": "Personal psychology" },
+{"source": "Perception of automation threat","target": "Awareness of personal market value" },
+{"source": "Promotion","target": "Career development" },
+{"source": "Personal development","target": "Career development" },
+{"source": "Training","target": "Career development" },
+{"source": "Skills","target": "Career development" },
+{"source": "Transferable skills","target": "Career development" },
+{"source": "Career prospects","target": "Career development" },
+{"source": "Promotion ceiling","target": "Career development" },
+{"source": "Career development","target": "Job Satisfaction" }
+]
+};
+
+
+nodes=[]
+for(const item of gData.nodes){
+  nodes.push(item.id)
+}
+
+
+/*initiate the autocomplete function on the "myInput" element, and pass along the nodes array as possible autocomplete values:*/
+autocomplete(document.getElementById("myInput"), nodes);
+
+/*##############################################################################
+
+
+###############################################################################*/
+
+const simplyColours = [10472261,7191373,4150947,8204431,11353235,14034486,14842669,15383580]
+const simplyHexColours = simplyColours.map((x)=>{
+    let y=x.toString(16)
+    let z="#"+y
+    return z
+  })
+
+const hiddenColour=16645886;
+
+//Display the graph
+const Graph = ForceGraph3D()
+  (document.getElementById('3d-graph'))
+    .nodeColor(node => (simplyColours[node.group]))
+    .nodeLabel(node => "<font size=\"6\", color=\"black\">"+ node.id+"</font>")
+    .linkOpacity(0.5)
+    .nodeOpacity(1)
+    .nodeRelSize(8)
+    //.linkDirectionalParticles(10)
+    .linkDirectionalParticleWidth(2)
+    .linkWidth(3)
+    //.linkAutoColorBy(d => gData.nodes[d.source].group)
+    .backgroundColor('#ffffff')
+    .width(window.innerWidth*0.85)
+    .height(window.innerHeight)
+    .showNavInfo(false)
+    .graphData(gData);
+
+/*##############################################################################
+
+
+###############################################################################*/
+
+var selectedNodeId;
+var searchedNodeId;
+
+function onSearchSubmit(){
+  var searchTerm = document.getElementById('myInput').value;
+  //Check the gData object to see if it contains the term being searched for
+  try{
+    searchedNodeId=gData.nodes.find(node => node.id.toLowerCase()===searchTerm.toLowerCase()).id;
+    console.log(searchedNodeId)
+  }
+  catch(err){
+    alert("No valid search input")
+  }
+  //Change the html message to show the node that has been searched for as selected
+  if(searchedNodeId){
+    selectedNodeId=searchedNodeId;
+    document.getElementById('selectedNodeP').innerHTML = `Node Selcted: ${selectedNodeId}`
+  }
+
+  //Colour the node that you have selected
+  Graph.nodeColor(node=> selectedNodeId.indexOf(node.id) ? hiddenColour : simplyColours[node.group])
+
+  //Move the camera to view the node you want
+  moveToNode(selectedNodeId);
+}
+
+function colourInfluencers(){
+  showInfluencers=true;
+  showInfluenced=false;
+  colourNeighbours();
+}
+
+function colourInfluenced(){
+  showInfluencers=false;
+  showInfluenced=true;
+  colourNeighbours();
+}
+
+function colourNeighbours(){
+    //for now, colour the whole graph grey
+    //Graph.nodeColor(node=> node.id==selectedNodeId ? simplyColours[node.group] : hiddenColour);
+    console.log('Entering function')
+    let neighboursIds=[selectedNodeId];
+    let influencedIds=[];
+    let influencersIds=[];
+
+    //find influencers
+    if(showInfluenced){
+      //console.log("showInfluenced loop")
+      for(i=0,numberOfLinks=gData.links.length;i<numberOfLinks;i++){
+        if(gData.links[i].source.id==selectedNodeId){
+          //console.log(gData.links[i].target);
+          influencedIds.push(gData.links[i].target.id)
+        }
+      }
+    }
+    console.log(influencedIds)
+
+    //find influencers
+    if(showInfluencers){
+      //console.log("showInfluencers loop")
+      for(i=0,numberOfLinks=gData.links.length;i<numberOfLinks;i++){
+        //console.log(gData.links[i])
+        if(gData.links[i].target.id==selectedNodeId){
+          //console.log("Find influencers loop")
+          //console.log(gData.links[i]);
+          //console.log(gData.links[i].source);
+          influencersIds.push(gData.links[i].source.id)
+        }
+      }
+    }
+    console.log(influencersIds)
+
+    neighboursIds=neighboursIds.concat(influencersIds).concat(influencedIds);
+
+    //colour in neighbours, hide everything else
+    Graph.nodeColor(node=> neighboursIds.includes(node.id) ? simplyColours[node.group] : hiddenColour)
+    //could make this a more complicated if statement to change the colour depending on whether they are influencers or influenced
+  }
+
+function moveToNode(){
+
+}
+
+function windowResize(){
+  Graph.width(window.innerWidth*0.9).height(window.innerHeight)
+}
+
+</script>
+</body>
+</html>
